@@ -23,8 +23,8 @@
 </style>
 </head>
 <body>
-<h1>Bakgrundsbilder till TV:n</h1>
-<p>Välj bilder från mobilen. De anpassas till TV:n och dyker upp under Bakgrund → Välj bilder.</p>
+<h1>Bilder till TV:ns slideshow</h1>
+<p>Välj bilder från mobilen. De anpassas till TV:n och dyker upp under Slideshow → Välj bilder.</p>
 
 <label for="pin">Kod från TV:n</label>
 <input id="pin" type="text" inputmode="numeric" maxlength="4" autocomplete="off">
@@ -40,6 +40,10 @@
 const $ = id => document.getElementById(id);
 const status = text => { $('status').textContent = text; };
 const progress = part => { $('fill').style.width = Math.round(part * 100) + '%'; };
+
+// The QR code on the TV links here with ?pin=1234, so the code is filled in already.
+const pinFromLink = new URLSearchParams(location.search).get('pin');
+if (pinFromLink) $('pin').value = pinFromLink;
 
 $('send').onclick = async () => {
   const pin = $('pin').value.trim();

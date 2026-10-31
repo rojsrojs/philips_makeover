@@ -105,6 +105,12 @@ final class Backgrounds {
         return file.renameTo(target) ? target : null;
     }
 
+    /** Short on-screen label: "3" for "Bild 3.jpg", otherwise the image's own name. */
+    static String label(File file) {
+        Matcher match = AUTO_NAME.matcher(file.getName());
+        return match.matches() ? match.group(1) : displayName(file);
+    }
+
     static String displayName(File file) {
         String name = file.getName();
         int dot = name.lastIndexOf('.');

@@ -107,6 +107,7 @@ public final class MainActivity extends Activity {
     private ScrollView scroll;
     private GridLayout grid;
     private TextView hint;
+    private TextView imageLabel;
     private int screenW;
     private int screenH;
     private int tileW;
@@ -192,6 +193,15 @@ public final class MainActivity extends Activity {
         scroll.addView(grid, MATCH, WRAP);
         column.addView(scroll, new LinearLayout.LayoutParams(MATCH, 0, 1f));
         root.addView(column, new FrameLayout.LayoutParams(appsW, MATCH));
+
+        // Number (or custom name) of the image being shown, in the bottom right corner.
+        imageLabel = text("", screenH * 22 / 1000, 0xB3FFFFFF);
+        imageLabel.setVisibility(View.GONE);
+        FrameLayout.LayoutParams labelParams =
+            new FrameLayout.LayoutParams(WRAP, WRAP, Gravity.BOTTOM | Gravity.END);
+        labelParams.rightMargin = gap;
+        labelParams.bottomMargin = gap;
+        root.addView(imageLabel, labelParams);
 
         hint = text("Flytta med pilarna  ·  Tryck OK när du är klar", screenH * 24 / 1000, Color.WHITE);
         hint.setBackground(rounded(0xCC000000, 999));
@@ -526,7 +536,7 @@ public final class MainActivity extends Activity {
         bar.addView(pill("Källor", v -> {
             if (!tryStart(new Intent(Intent.ACTION_MAIN).setComponent(SOURCES))) toast("Kunde inte öppna källor");
         }));
-        bar.addView(pill("Bakgrund", v -> showBackgroundMenu()));
+        bar.addView(pill("Slideshow", v -> showBackgroundMenu()));
         bar.addView(pill("Inställningar", v -> {
             if (!tryStart(new Intent(Settings.ACTION_SETTINGS))) toast("Kunde inte öppna inställningar");
         }));
@@ -575,18 +585,20 @@ public final class MainActivity extends Activity {
         File file = pick;
         new Thread(() -> {
             Bitmap bitmap = Backgrounds.decode(file, screenW, screenH);
-            runOnUiThread(() -> showBitmap(bitmap));
+            runOnUiThread(() -> showBitmap(bitmap, Backgrounds.label(file)));
         }).start();
     }
 
     /** Cross-fades to the new image. Old bitmaps are left to the GC so none is recycled while drawn. */
-    private void showBitmap(Bitmap bitmap) {
+    private void showBitmap(Bitmap bitmap, String label) {
         if (isDestroyed()) return;
         if (bitmap == null) {
             showDefaultBackground();
             return;
         }
         backgroundBitmap = bitmap;
+        imageLabel.setText(label);
+        imageLabel.setVisibility(View.VISIBLE);
         fade.animate().cancel();
         fade.setImageBitmap(bitmap);
         fade.setAlpha(0f);
@@ -604,12 +616,13 @@ public final class MainActivity extends Activity {
         fade.setAlpha(0f);
         fade.setImageDrawable(null);
         background.setImageDrawable(null);
+        imageLabel.setVisibility(View.GONE);
     }
 
     private void showBackgroundMenu() {
         CharSequence[] items = {"Välj bilder", "Ladda upp från mobilen", "Byt namn", "Ta bort bilder"};
         new AlertDialog.Builder(this, DIALOG_THEME)
-            .setTitle("Bakgrund")
+            .setTitle("Slideshow")
             .setItems(items, (dialog, which) -> {
                 if (which == 0) {
                     showSelectImages();
@@ -701,8 +714,8 @@ public final class MainActivity extends Activity {
 
     private void showNoImages() {
         new AlertDialog.Builder(this, DIALOG_THEME)
-            .setTitle("Bakgrund")
-            .setMessage("Det finns inga bakgrundsbilder på TV:n ännu. "
+            .setTitle("Slideshow")
+            .setMessage("Det finns inga bilder på TV:n ännu. "
                 + "Välj \"Ladda upp från mobilen\" för att lägga till.")
             .setPositiveButton("OK", null)
             .show();
@@ -779,9 +792,18 @@ public final class MainActivity extends Activity {
         }
         body.setText(uploadText(address[0], pin, 0));
 
+        // The QR code opens the upload page with the code already filled in.
+        ImageView qr = new ImageView(this);
+        qr.setImageBitmap(QrCode.render(address[0] + "/?pin=" + pin, Math.max(4, screenH / 150)));
+        LinearLayout content = new LinearLayout(this);
+        content.setGravity(Gravity.CENTER_VERTICAL);
+        content.setPadding(gap, gap / 2, 0, 0);
+        content.addView(qr, WRAP, WRAP);
+        content.addView(body, new LinearLayout.LayoutParams(0, WRAP, 1f));
+
         uploadDialog = new AlertDialog.Builder(this, DIALOG_THEME)
             .setTitle("Ladda upp från mobilen")
-            .setView(body)
+            .setView(content)
             .setPositiveButton("Klar", null)
             .create();
         uploadDialog.setOnDismissListener(d -> {
@@ -794,11 +816,10 @@ public final class MainActivity extends Activity {
 
     private static CharSequence uploadText(String address, String pin, int received) {
         SpannableStringBuilder text = new SpannableStringBuilder();
-        text.append("Öppna den här adressen i mobilens webbläsare:\n");
-        appendBig(text, address);
-        text.append("\n\nKod:  ");
+        appendBig(text, "Skanna QR-koden med mobilens kamera");
+        text.append("\n\nEller öppna ").append(address).append(" och skriv in koden ");
         appendBig(text, pin);
-        text.append("\n\nMobilen måste vara ansluten till samma nätverk som TV:n.\n");
+        text.append("\n\nMobilen måste vara ansluten till samma nätverk som TV:n.\n\n");
         text.append("Mottagna bilder: ").append(String.valueOf(received));
         return text;
     }
@@ -806,7 +827,7 @@ public final class MainActivity extends Activity {
     private static void appendBig(SpannableStringBuilder text, String value) {
         int start = text.length();
         text.append(value);
-        text.setSpan(new RelativeSizeSpan(1.6f), start, text.length(), 0);
+        text.setSpan(new RelativeSizeSpan(1.3f), start, text.length(), 0);
         text.setSpan(new StyleSpan(Typeface.BOLD), start, text.length(), 0);
     }
 

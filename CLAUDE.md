@@ -20,7 +20,10 @@ See README.md for the user-facing steps.
   - `Backgrounds`: images in `getExternalFilesDir()/backgrounds`; decoding, upload processing (EXIF
     rotation, resize, JPEG, auto-name "Bild N"), renaming, natural sort.
   - `UploadServer`: minimal HTTP server (port 8080–8090), only alive while the upload dialog is open,
-    4-digit PIN; the page is `assets/upload.html`.
+    4-digit PIN; the page is `assets/upload.html` and prefills the PIN from `?pin=`.
+  - `QrCode`: dependency-free QR encoder (byte mode, level M, versions 1–6) for the upload link. Verify
+    changes by decoding a screenshot, for example with `zxing-cpp` in a throwaway venv.
+  - The background menu is labelled "Slideshow" in the UI.
   - The UI text is Swedish.
 
 ## Rules

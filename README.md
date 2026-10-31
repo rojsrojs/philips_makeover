@@ -113,10 +113,10 @@ adb reboot
 ## Using Hem
 
 - **Favourites grid:** open an app with **OK**. **Hold OK** on a tile to **Flytta** (move, using the arrow keys, then OK) or **Ta bort från favoriter** (remove). The **+** tile adds any installed app.
-- **Top bar:** clock, **Källor** (inputs/HDMI), **Bakgrund** (background) and **Inställningar** (the normal TV settings).
-- **Bakgrund:**
-  - **Ladda upp från mobilen:** the TV shows an address and a 4-digit code. Open the address in a phone browser on the same network and upload photos. They are rotated upright, resized for the TV and named *Bild 1, Bild 2, …*
-  - **Välj bilder:** tick the photos to show. None gives a black background, one gives a still image, and several give a slideshow that changes every 10 seconds.
+- **Top bar:** clock, **Källor** (inputs/HDMI), **Slideshow** and **Inställningar** (the normal TV settings).
+- **Slideshow:**
+  - **Ladda upp från mobilen:** the TV shows a QR code. Scan it with a phone on the same network to open the upload page with the code already filled in, or type the address and 4-digit code shown next to it. Photos are rotated upright, resized for the TV and named *Bild 1, Bild 2, …*
+  - **Välj bilder:** tick the photos to show. None gives a black background, one gives a still image, and several give a slideshow that changes every 10 seconds. A small label in the bottom right corner shows the image's number, or its name if you renamed it.
   - **Byt namn / Ta bort bilder:** rename or delete photos.
 - Images can also be copied from the PC: put them in `backgrounds\` and run `.\push-backgrounds.ps1`.
 - The default favourites are a set of Nordic streaming apps (`Favorites.java`). Apps that aren't installed are skipped, so just edit the grid on the TV.

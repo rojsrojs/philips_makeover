@@ -1,5 +1,5 @@
 # Copies the images in .\backgrounds to the Hem launcher on the TV.
-# (Uploading from a phone via Bakgrund -> Ladda upp från mobilen is usually easier.)
+# (Uploading from a phone via Slideshow -> Ladda upp från mobilen is usually easier.)
 # Usage: .\push-backgrounds.ps1          (copy images to the TV)
 #        .\push-backgrounds.ps1 -Mirror  (also delete images on the TV that are not in the folder,
 #                                         including ones uploaded from a phone)
