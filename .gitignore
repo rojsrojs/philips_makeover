@@ -1,0 +1,15 @@
+# Build output
+home-app/build/
+
+# Signing key: never commit. Updates of the app must be signed with this key, so back it up elsewhere.
+home-app/keystore/
+*.jks
+*.keystore
+
+# Local, per-TV files
+tv-address.txt
+backup/
+
+# Personal background images
+backgrounds/*
+!backgrounds/.gitkeep
