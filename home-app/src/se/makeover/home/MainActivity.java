@@ -533,6 +533,16 @@ public final class MainActivity extends Activity {
             .show();
     }
 
+    /**
+     * Opens Android's About page ("Om"), where "Starta om" is the first, already selected item.
+     * Apps may not restart the TV themselves: the REBOOT permission is system-only.
+     */
+    private void openRestart() {
+        if (!tryStart(new Intent(Settings.ACTION_DEVICE_INFO_SETTINGS))) {
+            toast("Starta om via Inställningar → Android-inställningar → Om");
+        }
+    }
+
     private void startMoving(int index) {
         movingIndex = index;
         hint.setVisibility(View.VISIBLE);
@@ -657,6 +667,7 @@ public final class MainActivity extends Activity {
         bar.addView(pill("Inställningar", v -> {
             if (!tryStart(new Intent(Settings.ACTION_SETTINGS))) toast("Kunde inte öppna inställningar");
         }));
+        bar.addView(pill("Om", v -> openRestart()));
         return bar;
     }
 
@@ -664,7 +675,8 @@ public final class MainActivity extends Activity {
         TextView pill = text(label, screenH * 22 / 1000, Color.WHITE);
         pill.setShadowLayer(0, 0, 0, 0);
         int vertical = screenH * 12 / 1000;
-        pill.setPadding(vertical * 2, vertical, vertical * 2, vertical);
+        int horizontal = vertical * 17 / 10;
+        pill.setPadding(horizontal, vertical, horizontal, vertical);
         StateListDrawable bg = new StateListDrawable();
         bg.addState(new int[] {android.R.attr.state_focused}, rounded(Color.WHITE, 999));
         bg.addState(new int[0], rounded(0x33FFFFFF, 999));

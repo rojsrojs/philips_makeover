@@ -46,7 +46,7 @@ See README.md for the user-facing steps.
 ## Device findings
 
 - **No authorisation popup:** revoke authorisations, toggle USB debugging and do a real restart
-  (not standby). The approval is then remembered.
+  (Settings → Android settings → About → Restart; the power button only gives standby). The approval is then remembered.
 - **`cmd package set-home-activity <component>`** switches the launcher without a picker. Uninstalling
   the current default launcher clears the choice, so set it again. The stock launcher is
   `com.google.android.tvlauncher/.MainActivity`; disable it, or the system starts it at boot anyway.
@@ -69,6 +69,9 @@ See README.md for the user-facing steps.
   writes small indexes as `Proc # 5:` (with a space).
 - **`killBackgroundProcesses`** (a normal permission) stops cached and service processes, including
   Netflix, but not audible or visible ones. `FORCE_STOP_PACKAGES` can't be granted.
+- **Restart:** `REBOOT` is signature|privileged and can't be granted. `android.settings.DEVICE_INFO_SETTINGS`
+  opens `com.android.tv.settings/.about.AboutActivity` with "Starta om" as the first item, so Hem's
+  "Om" button in the top bar links there. Holding the remote's power button does not show a restart menu.
 - **`adb shell input keyevent --longpress`** does not trigger a long press in Hem. It acts as a click.
 - **Philips telemetry:** `org.droidtv.candeebug` logs app-usage events. It is not in `debloat.ps1`
   because its role is unclear; test carefully before adding it.
