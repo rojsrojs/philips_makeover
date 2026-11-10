@@ -112,8 +112,11 @@ adb reboot
 
 ## Using Hem
 
-- **Favourites grid:** open an app with **OK**. **Hold OK** on a tile to **Flytta** (move, using the arrow keys, then OK) or **Ta bort från favoriter** (remove). The **+** tile adds any installed app.
-- **Top bar:** clock, **Källor** (inputs/HDMI), **Slideshow** and **Inställningar** (the normal TV settings).
+- **Favourites grid:** open an app with **OK**. **Hold OK** on a tile to **Flytta** (move, using the arrow keys, then OK), **Tvinga avslutning** (force quit) or **Ta bort från favoriter** (remove). The **+** tile adds any installed app.
+- **Top bar:** clock, **Källor** (inputs/HDMI), **Aktiva appar**, **Slideshow** and **Inställningar** (the normal TV settings).
+- **Aktiva appar** is a small task manager. It lists your running apps with their memory use and shows free memory in the title. Select an app to force quit it. System and Philips processes are not listed.
+  - Force quit stops the app's processes. Android won't let an ordinary app stop something that is audible or on screen (for example music playing), so in that case Hem opens the app's system page, where you press **Tvångsstoppa**.
+  - It needs two permissions that only adb can grant (`DUMP` and `PACKAGE_USAGE_STATS`). `build.ps1` grants them on every install.
 - **Slideshow:**
   - **Ladda upp från mobilen:** the TV shows a QR code. Scan it with a phone on the same network to open the upload page with the code already filled in, or type the address and 4-digit code shown next to it. Photos are rotated upright, resized for the TV and named *Bild 1, Bild 2, …*
   - **Välj bilder:** tick the photos to show. None gives a black background, one gives a still image, and several give a slideshow that changes every 10 seconds. A small label in the bottom right corner shows the image's number, or its name if you renamed it.

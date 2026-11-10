@@ -62,6 +62,10 @@ Write-Host "Built $out\Hem.apk"
 if (-not $NoInstall) {
     . "$PSScriptRoot\..\common.ps1"
     & $adb -s $tv install -r "$out\Hem.apk"
+    # Lets "Aktiva appar" see other apps' processes: dumpsys needs DUMP plus usage access.
+    & $adb -s $tv shell pm grant se.makeover.home android.permission.DUMP
+    & $adb -s $tv shell pm grant se.makeover.home android.permission.PACKAGE_USAGE_STATS
+    & $adb -s $tv shell appops set se.makeover.home GET_USAGE_STATS allow
     if ($SetHome) {
         & $adb -s $tv shell cmd package set-home-activity se.makeover.home/.MainActivity
         $result = (& $adb -s $tv shell pm disable-user --user 0 com.google.android.tvlauncher) -join ' '

@@ -23,6 +23,9 @@ See README.md for the user-facing steps.
     4-digit PIN; the page is `assets/upload.html` and prefills the PIN from `?pin=`.
   - `QrCode`: dependency-free QR encoder (byte mode, level M, versions 1–6) for the upload link. Verify
     changes by decoding a screenshot, for example with `zxing-cpp` in a throwaway venv.
+  - `RunningApps`: the "Aktiva appar" task manager. It parses `dumpsys activity o` (run by the app
+    itself), keeps launchable non-system packages and sums PSS via `getProcessMemoryInfo`. Force quit
+    uses `killBackgroundProcesses` and falls back to the system app page when the app survives.
   - The background menu is labelled "Slideshow" in the UI.
   - The UI text is Swedish.
 
@@ -60,5 +63,14 @@ See README.md for the user-facing steps.
 - **Shell access:** the shell user can write to `/sdcard/Android/data/se.makeover.home/files/`, but not
   to the app's private SharedPreferences (the app isn't debuggable). Renaming files from adb therefore
   loses the slideshow selection.
+- **Apps reading process info:** on Android 8, an app can run `dumpsys activity` only with
+  `DUMP` (`pm grant`) **and** `PACKAGE_USAGE_STATS` granted as a permission (`pm grant`, not just
+  `appops set GET_USAGE_STATS allow`). `build.ps1` grants both after each install. The oom list
+  writes small indexes as `Proc # 5:` (with a space).
+- **`killBackgroundProcesses`** (a normal permission) stops cached and service processes, including
+  Netflix, but not audible or visible ones. `FORCE_STOP_PACKAGES` can't be granted.
+- **`adb shell input keyevent --longpress`** does not trigger a long press in Hem. It acts as a click.
+- **Philips telemetry:** `org.droidtv.candeebug` logs app-usage events. It is not in `debloat.ps1`
+  because its role is unclear; test carefully before adding it.
 - **Building:** javac with `-bootclasspath android.jar` fails on lambdas (no `LambdaMetafactory`). Use
   `--release 8 -classpath android.jar`.

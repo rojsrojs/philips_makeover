@@ -1,6 +1,7 @@
 package se.makeover.home;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -19,6 +20,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -405,15 +407,129 @@ public final class MainActivity extends Activity {
     private void showTileMenu(int index) {
         new AlertDialog.Builder(this, DIALOG_THEME)
             .setTitle(favorites.get(index).label)
-            .setItems(new CharSequence[] {"Flytta", "Ta bort från favoriter"}, (dialog, which) -> {
+            .setItems(new CharSequence[] {"Flytta", "Tvinga avslutning", "Ta bort från favoriter"}, (dialog, which) -> {
                 if (which == 0) {
                     startMoving(index);
+                } else if (which == 1) {
+                    AppEntry app = favorites.get(index);
+                    forceStop(app.pkg, app.label, null);
                 } else {
                     favorites.remove(index);
                     saveFavorites();
                     rebuildGrid(index);
                 }
             })
+            .show();
+    }
+
+    /**
+     * Stops an app's processes. Android refuses for apps that are audible or visible (for example
+     * music playing), so if the app is still running afterwards its system page opens instead,
+     * where "Tvångsstoppa" always works.
+     */
+    private void forceStop(String pkg, CharSequence label, Runnable afterwards) {
+        ((ActivityManager) getSystemService(ACTIVITY_SERVICE)).killBackgroundProcesses(pkg);
+        new Thread(() -> {
+            try {
+                Thread.sleep(800);
+            } catch (InterruptedException ignored) {
+                // Check right away instead.
+            }
+            Boolean running = RunningApps.isRunning(this, pkg);
+            runOnUiThread(() -> {
+                if (isDestroyed()) return;
+                if (Boolean.TRUE.equals(running)) {
+                    toast(label + " kunde inte avslutas härifrån. Tryck Tvångsstoppa.");
+                    tryStart(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + pkg)));
+                } else {
+                    toast(label + " är avslutad");
+                    if (afterwards != null) afterwards.run();
+                }
+            });
+        }).start();
+    }
+
+    // --- Task manager ---
+
+    private void showRunningApps() {
+        AlertDialog loading = new AlertDialog.Builder(this, DIALOG_THEME)
+            .setTitle("Aktiva appar")
+            .setMessage("Läser minnesanvändning …")
+            .show();
+        new Thread(() -> {
+            List<RunningApps.Entry> apps = null;
+            String error = null;
+            try {
+                apps = RunningApps.load(this);
+            } catch (IOException | RuntimeException e) {
+                error = e.getMessage();
+            }
+            ActivityManager.MemoryInfo memory = new ActivityManager.MemoryInfo();
+            ((ActivityManager) getSystemService(ACTIVITY_SERVICE)).getMemoryInfo(memory);
+            List<RunningApps.Entry> result = apps;
+            String failure = error;
+            runOnUiThread(() -> {
+                if (isDestroyed() || !loading.isShowing()) return; // closed while loading
+                loading.dismiss();
+                showRunningAppsList(result, failure, memory);
+            });
+        }).start();
+    }
+
+    private void showRunningAppsList(List<RunningApps.Entry> apps, String error, ActivityManager.MemoryInfo memory) {
+        String title = "Aktiva appar · " + memory.availMem / (1024 * 1024) + " av "
+            + memory.totalMem / (1024 * 1024) + " MB ledigt";
+        String message = null;
+        if (error != null) {
+            message = "Kunde inte läsa listan över appar (" + error + ").";
+        } else if (apps == null) {
+            message = "Hem behöver behörigheten DUMP för att se andra appar. "
+                + "Den ges när Hem installeras med build.ps1 (se README).";
+        } else if (apps.isEmpty()) {
+            message = "Inga andra appar körs just nu.";
+        }
+        if (message != null) {
+            new AlertDialog.Builder(this, DIALOG_THEME).setTitle(title).setMessage(message)
+                .setPositiveButton("OK", null).show();
+            return;
+        }
+
+        PackageManager pm = getPackageManager();
+        List<CharSequence> labels = new ArrayList<>();
+        List<CharSequence> rows = new ArrayList<>();
+        List<Drawable> icons = new ArrayList<>();
+        for (RunningApps.Entry app : apps) {
+            CharSequence label = app.pkg;
+            Drawable icon = null;
+            try {
+                label = pm.getApplicationLabel(pm.getApplicationInfo(app.pkg, 0));
+                icon = pm.getApplicationIcon(app.pkg);
+            } catch (PackageManager.NameNotFoundException ignored) {
+                // Uninstalled since the list was read; show the package name.
+            }
+            labels.add(label);
+            icons.add(icon);
+            rows.add(label + "   ·   " + Math.round(app.pssKb / 1024f) + " MB");
+        }
+
+        int iconPx = screenH * 5 / 100;
+        ArrayAdapter<CharSequence> adapter =
+            new ArrayAdapter<CharSequence>(this, android.R.layout.select_dialog_item, rows) {
+                @Override
+                public View getView(int position, View convertView, ViewGroup parent) {
+                    TextView row = (TextView) super.getView(position, convertView, parent);
+                    Drawable icon = icons.get(position);
+                    if (icon != null) icon.setBounds(0, 0, iconPx, iconPx);
+                    row.setCompoundDrawables(icon, null, null, null);
+                    row.setCompoundDrawablePadding(iconPx / 2);
+                    return row;
+                }
+            };
+        new AlertDialog.Builder(this, DIALOG_THEME)
+            .setTitle(title)
+            .setAdapter(adapter, (dialog, which) ->
+                forceStop(apps.get(which).pkg, labels.get(which), this::showRunningApps))
+            .setPositiveButton("Stäng", null)
             .show();
     }
 
@@ -536,6 +652,7 @@ public final class MainActivity extends Activity {
         bar.addView(pill("Källor", v -> {
             if (!tryStart(new Intent(Intent.ACTION_MAIN).setComponent(SOURCES))) toast("Kunde inte öppna källor");
         }));
+        bar.addView(pill("Aktiva appar", v -> showRunningApps()));
         bar.addView(pill("Slideshow", v -> showBackgroundMenu()));
         bar.addView(pill("Inställningar", v -> {
             if (!tryStart(new Intent(Settings.ACTION_SETTINGS))) toast("Kunde inte öppna inställningar");
